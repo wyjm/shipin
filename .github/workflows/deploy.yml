@@ -1,0 +1,37 @@
+name: Seko AI Video Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          pip install requests
+
+      - name: List files
+        run: |
+          ls -la
+          ls -la scripts/
+
+      - name: Test API connection
+        env:
+          SEKO_API_KEY: ${{ secrets.SEKO_API_KEY }}
+        run: |
+          if [ -z "$SEKO_API_KEY" ]; then
+            echo "SEKO_API_KEY not configured - skipping test"
+          else
+            echo "API Key configured: ${SEKO_API_KEY:0:10}..."
+          fi
