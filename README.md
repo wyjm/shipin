@@ -1,21 +1,13 @@
 # 🎬 Seko AI 视频创作工具集
 
-> 通过 Python 脚本调用 Seko API 生成视频策划案和视频的 CLI 工具集
+> 通过 Python 脚本调用 Seko API 生成视频策划案和视频
 
 ## 📖 简介
 
-这是一个**本地命令行工具**，不是需要部署的 Web 服务。用户在自己的电脑上按需执行脚本，调用 Seko AI (seko.sensetime.com) 的 API 来生成视频策划案和 AI 视频。
+支持两种使用方式：
 
-**核心用途**：
-- 📝 在本地生成影视策划案（故事、角色、场景、分镜）
-- 🎬 生成 AI 视频
-- 🖼️ 下载角色和场景素材图片
-
-## 🔧 环境要求
-
-- Python 3.7+
-- 网络连接（访问 seko.sensetime.com）
-- Seko API Key
+1. **本地 CLI 工具**：直接运行 Python 脚本
+2. **API 服务**：部署为 FastAPI 服务
 
 ## ⚙️ 配置步骤
 
@@ -25,113 +17,85 @@
 2. 首页**左下角**点击 🦞 **Openclaw 入口**
 3. 复制 API Key（格式：`Seko-xxxxxxxx`）
 
-### 2. 配置 API Key
+### 2. 配置环境变量
 
 ```bash
-# 方式1：设置环境变量
 export SEKO_API_KEY=Seko-xxxxxxxx
-
-# 方式2：运行脚本时传入
-python3 gen_proposal.py --prompt "主题" --seko_api_key "Seko-xxxxxxxx"
 ```
 
 ## 🚀 使用方法
 
-### 1. 克隆仓库
+### 方式一：本地 CLI 工具
 
 ```bash
+# 克隆仓库
 git clone https://github.com/wyjm/shipin.git
 cd shipin
-```
-
-### 2. 生成策划案
-
-```bash
-# 设置 API Key
-export SEKO_API_KEY=Seko-xxxxxxxx
 
 # 生成策划案
-python3 scripts/gen_proposal.py --prompt "体检报告怎么看？科普小视频，可爱Q版3D画风"
-```
+python3 scripts/gen_proposal.py --prompt "体检报告科普视频"
 
-输出示例：
-```json
-{"code":200,"data":{"taskId":"2047525792706523139","taskStatus":"RUNNING"}}
-```
+# 查询策划案
+python3 scripts/get_proposal.py --taskid "任务ID" --wait
 
-### 3. 查询策划案结果
-
-```bash
-python3 scripts/get_proposal.py \
-  --taskid "2047525792706523139" \
-  --wait \
-  --download ./assets \
-  --output proposal_result.json
-```
-
-### 4. 生成视频（需要先有策划案 docId）
-
-```bash
+# 生成视频
 python3 scripts/gen_video.py --docid "策划案ID"
+
+# 查询视频
+python3 scripts/get_video.py --taskid "任务ID" --wait
 ```
 
-### 5. 查询视频结果
+### 方式二：API 服务部署
 
 ```bash
-python3 scripts/get_video.py \
-  --taskid "视频任务ID" \
-  --wait \
-  --download ./output \
-  --output video_result.json
+# 1. 安装依赖
+pip install fastapi uvicorn requests
+
+# 2. 配置环境变量
+export SEKO_API_KEY=Seko-xxxxxxxx
+
+# 3. 启动服务
+uvicorn api:app --host 0.0.0.0 --port 8000
 ```
 
-## 📂 脚本说明
+#### API 端点
 
-| 脚本 | 功能 |
-|------|------|
-| `gen_proposal.py` | 提交策划案生成任务 |
-| `get_proposal.py` | 查询策划案结果，下载素材 |
-| `gen_video.py` | 提交视频生成任务 |
-| `get_video.py` | 查询视频结果，下载视频 |
-| `modify_proposal.py` | 修改已有策划案 |
-| `download_img.py` | 下载图片素材 |
-| `download_video.py` | 下载视频文件 |
+| 方法 | 端点 | 说明 |
+|------|------|------|
+| GET | `/` | 健康检查 |
+| GET | `/api/health` | 服务状态 |
+| POST | `/api/generate_proposal` | 生成策划案 |
 
-## 📁 输出结构
+#### 调用示例
+
+```bash
+# 生成策划案
+curl -X POST http://localhost:8000/api/generate_proposal \
+  -H "Content-Type: application/json" \
+  -d '{"prompt": "体检报告科普视频", "api_key": "Seko-xxxxxxxx"}'
+```
+
+## 📂 项目结构
 
 ```
 shipin/
-├── assets/              # 角色/场景图片素材
-│   ├── Q版小人.png
-│   ├── 机器人医生.png
+├── api.py                   # FastAPI 服务入口
+├── scripts/
+│   ├── gen_proposal.py      # 生成策划案
+│   ├── get_proposal.py      # 查询策划案
+│   ├── gen_video.py         # 生成视频
+│   ├── get_video.py         # 查询视频
 │   └── ...
-├── outputs/             # 策划案和视频结果
-│   ├── proposal_result.json
-│   └── video_result.json
-├── scripts/             # 工具脚本
+├── references/
+│   └── config.md            # 配置指南
 └── README.md
 ```
 
 ## ⚠️ 注意事项
 
-1. **本地使用**：这是本地 CLI 工具，不需要部署到服务器
-2. **按需执行**：需要生成视频时运行脚本，不是持续运行的服务
-3. **积分消耗**：视频生成会消耗 Seko 平台积分
-4. **网络要求**：运行脚本时需要联网
-
-## ❓ 常见问题
-
-**Q: 这是一个 Web 服务吗？**
-A: 不是，这是本地 CLI 工具集，下载到本地后运行脚本使用。
-
-**Q: 需要部署到服务器吗？**
-A: 不需要，直接在本地 Python 环境中运行脚本即可。
-
-**Q: GitHub Actions 有什么用？**
-A: 可选的 CI/CD 配置，不是必需的。不部署服务时可以忽略。
-
-**Q: 积分不足怎么办？**
-A: 登录 seko.sensetime.com 充值积分。
+- 视频生成会消耗 Seko 平台积分
+- API 服务需要持续运行
+- 本地 CLI 可按需执行
 
 ## 📄 许可证
 
