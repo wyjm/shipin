@@ -1,55 +1,29 @@
-# 🎬 Seko AI 视频创作工具集
+# 🎬 Seko AI 视频创作工具
 
-> 通过 Python 脚本调用 Seko API 生成视频策划案和视频
+> 通过 FastAPI 提供 REST API 服务，支持视频策划案和视频生成
 
-## 📖 简介
+## 🚀 快速部署
 
-支持两种使用方式：
-
-1. **本地 CLI 工具**：直接运行 Python 脚本
-2. **API 服务**：部署为 FastAPI 服务
-
-## ⚙️ 配置步骤
-
-### 1. 获取 SEKO API Key
-
-1. 登录 [https://seko.sensetime.com](https://seko.sensetime.com)
-2. 首页**左下角**点击 🦞 **Openclaw 入口**
-3. 复制 API Key（格式：`Seko-xxxxxxxx`）
-
-### 2. 配置环境变量
+### 方式一：Docker 部署（推荐）
 
 ```bash
-export SEKO_API_KEY=Seko-xxxxxxxx
-```
-
-## 🚀 使用方法
-
-### 方式一：本地 CLI 工具
-
-```bash
-# 克隆仓库
+# 1. 克隆仓库
 git clone https://github.com/wyjm/shipin.git
 cd shipin
 
-# 生成策划案
-python3 scripts/gen_proposal.py --prompt "体检报告科普视频"
+# 2. 配置环境变量
+export SEKO_API_KEY=Seko-xxxxxxxx
 
-# 查询策划案
-python3 scripts/get_proposal.py --taskid "任务ID" --wait
-
-# 生成视频
-python3 scripts/gen_video.py --docid "策划案ID"
-
-# 查询视频
-python3 scripts/get_video.py --taskid "任务ID" --wait
+# 3. 构建并运行
+docker build -t seko-ai-video .
+docker run -d -p 8000:8000 -e SEKO_API_KEY=Seko-xxxxxxxx seko-ai-video
 ```
 
-### 方式二：API 服务部署
+### 方式二：直接运行
 
 ```bash
 # 1. 安装依赖
-pip install fastapi uvicorn requests
+pip install -r requirements.txt
 
 # 2. 配置环境变量
 export SEKO_API_KEY=Seko-xxxxxxxx
@@ -58,50 +32,79 @@ export SEKO_API_KEY=Seko-xxxxxxxx
 uvicorn api:app --host 0.0.0.0 --port 8000
 ```
 
-#### API 端点
+## 📡 API 端点
 
-| 方法 | 端点 | 说明 |
-|------|------|------|
-| GET | `/` | 健康检查 |
-| GET | `/api/health` | 服务状态 |
-| POST | `/api/generate_proposal` | 生成策划案 |
-
-#### 调用示例
-
+### 健康检查
 ```bash
-# 生成策划案
-curl -X POST http://localhost:8000/api/generate_proposal \
-  -H "Content-Type: application/json" \
-  -d '{"prompt": "体检报告科普视频", "api_key": "Seko-xxxxxxxx"}'
+GET /api/health
+```
+
+### 生成策划案
+```bash
+POST /api/generate_proposal
+Content-Type: application/json
+
+{
+  "prompt": "体检报告科普视频，可爱Q版3D画风",
+  "api_key": "Seko-xxxxxxxx"  // 可选，使用环境变量则不需要
+}
+```
+
+### 查询策划案
+```bash
+POST /api/get_proposal
+Content-Type: application/json
+
+{
+  "task_id": "任务ID",
+  "wait": true,
+  "interval": 20
+}
+```
+
+### 生成视频
+```bash
+POST /api/generate_video
+Content-Type: application/json
+
+{
+  "doc_id": "策划案ID"
+}
+```
+
+### 查询视频
+```bash
+POST /api/get_video
+Content-Type: application/json
+
+{
+  "task_id": "任务ID",
+  "wait": true,
+  "interval": 30
+}
 ```
 
 ## 📂 项目结构
 
 ```
 shipin/
-├── api.py                   # FastAPI 服务入口
-├── scripts/
-│   ├── gen_proposal.py      # 生成策划案
-│   ├── get_proposal.py      # 查询策划案
-│   ├── gen_video.py         # 生成视频
-│   ├── get_video.py         # 查询视频
-│   └── ...
-├── references/
-│   └── config.md            # 配置指南
+├── api.py              # FastAPI 服务
+├── Dockerfile          # Docker 配置
+├── requirements.txt    # Python 依赖
+├── scripts/            # 核心脚本
+│   ├── gen_proposal.py
+│   ├── get_proposal.py
+│   ├── gen_video.py
+│   └── get_video.py
 └── README.md
 ```
 
-## ⚠️ 注意事项
+## ⚠️ 重要配置
 
-- 视频生成会消耗 Seko 平台积分
-- API 服务需要持续运行
-- 本地 CLI 可按需执行
+- **SEKO_API_KEY**：必须配置，可在环境变量或请求中提供
+- **端口**：默认 8000，可通过 PORT 环境变量修改
+- **项目目录**：默认 `./project`，可通过 project_dir 参数修改
 
 ## 📄 许可证
 
 MIT License
-
-## 👤 作者
-
-- GitHub: https://github.com/wyjm
-- 官网: https://seko.sensetime.com
